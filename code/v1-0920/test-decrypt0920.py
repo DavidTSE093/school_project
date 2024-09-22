@@ -5,7 +5,7 @@ import base64
 import subprocess
 from Crypto.Cipher import AES
 
-file_path = r'D:\\USER\\desktop\\school-project\\raw_code\\version1.0'
+file_path = r'D:\\USER\\desktop\\school-project\\raw_code\\version1.0\\'
 
 def urlsafe_b64decode_nopad(data):
     padding_needed = 4 - (len(data) % 4)
@@ -22,8 +22,12 @@ with open(file_path + r'\\test-account.json', 'r') as file:
     account_data = json.load(file)
 
 server_id = account_data['id']
+print("server_id : " + server_id + '\n')
 server_xlh = account_data['xlh']
+print("sever_xlh : " + server_xlh + '\n')
 server_pin = account_data['pin']
+print("sever_pin : " + server_pin + '\n')
+print("--------------------------------------------" + '\n')
 
 # 读取 sso_id 和 sso_token
 with open(file_path + r'txt_data\\sso_id.txt', 'r') as file:
@@ -53,20 +57,21 @@ key = params_token[:32]  # token 前 32 bytes 当 key
 iv = params_token[32:48]  # token 接续 16 bytes 当 iv (nonce)
 
 sso_id = urlsafe_b64decode_nopad(sso_id_base64url)
+#print(f"sso_id: {sso_id}")
 user_id_bytes = decrypt(sso_id, key, iv, AES.MODE_GCM)
 
 # 打印解密出来的原始字节数据
-print(f"user_id_bytes (raw): {user_id_bytes}")
+print(f"user_id_bytes (raw): {user_id_bytes}" + '\n')
 
 # 解码处理
 user_id_hex = user_id_bytes[:27].hex()
-print(f"user_id (hex): {user_id_hex}")
+print(f"user_id (hex): {user_id_hex}" + '\n')
 
 # 现在有了 user_id 和 sso_token（作为 user_token）
 user_token = sso_token
 
 # 打印解密信息（可选）
-print(f"user_token: {user_token}")
+print(f"user_token: {user_token}" + '\n')
 
 # 组合命令并执行
 command = [
@@ -79,7 +84,7 @@ command = [
 ]
 
 # 打印命令以供调试
-print(f"Executing command: {command}")
+#print(f"Executing command: {command}")
 
 # 确保文件存在
 if os.path.exists(command[0]):
