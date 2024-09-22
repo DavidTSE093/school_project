@@ -5,7 +5,7 @@ import base64
 import subprocess
 from Crypto.Cipher import AES
 
-file_path = r'D:\\USER\\desktop\\school-project\\raw_code'
+file_path = r'D:\\USER\\desktop\\school-project\\raw_code\\version1.0'
 
 def urlsafe_b64decode_nopad(data):
     padding_needed = 4 - (len(data) % 4)
