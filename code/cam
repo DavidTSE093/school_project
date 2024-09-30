@@ -62,3 +62,143 @@ http://192.168.1.100:8080
 
 ### 總結
 以上步驟能夠讓你在樹莓派上使用攝影機模組，並將視訊畫面串流到 PC 或手機上觀看。你可以根據需求調整畫面質量及幀率。
+
+
+
+from flask import Flask, render_template_string, Response
+from io import BufferedIOBase
+from threading import Condition
+from picamera2 import Picamera2
+from picamera2.encoders import JpegEncoder, Quality
+from picamera2.outputs import FileOutput
+from libcamera import controls, Transform
+
+template = '''
+    <!DOCTYPE html>
+    <html lang="en">
+        <body>
+            <img src="{{ url_for('video_stream') }}" width="100%">
+        </body>
+    </html>
+    '''
+
+app = Flask(__name__)
+
+
+class StreamingOutput(BufferedIOBase):
+    def __init__(self):
+        self.frame = None
+        self.condition = Condition()
+
+    def write(self, buf):
+        with self.condition:
+            self.frame = buf
+            self.condition.notify_all()
+
+
+output = StreamingOutput()
+
+
+def gen_frames():
+    while True:
+        with output.condition:
+            output.condition.wait()
+            frame = output.frame
+
+        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
+@app.route("/", methods=['GET'])
+def get_stream_html():
+    return render_template_string(template)
+
+
+@app.route('/api/stream')
+def video_stream():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+if __name__ == "__main__":
+    cam = Picamera2()
+    config = cam.create_video_configuration(
+        {'size': (1920, 1080), 'format': 'XBGR8888'},
+        transform=Transform(vflip=1),
+        controls={'NoiseReductionMode': controls.draft.NoiseReductionModeEnum.HighQuality, 'Sharpness': 1.5}
+    )
+    cam.configure(config)
+    cam.start_recording(JpegEncoder(), FileOutput(output), Quality.VERY_HIGH)
+
+    app.run(host='0.0.0.0')
+
+    cam.stop()
+
+    '''
+    要實現樹莓派（Raspberry Pi）外接相機模組，並在PC或手機上查看視訊畫面，你可以使用以下步驟來完成這個設置：
+
+### 步驟 1: 設置樹莓派相機模組
+1. **啟用相機模組**
+   - 開啟樹莓派的終端機並執行以下命令以啟用相機模組：
+     ```
+     sudo raspi-config
+     ```
+   - 選擇 `Interface Options`，然後啟用 `Camera` 模組。
+   - 重新啟動樹莓派。
+
+2. **確認相機模組運作正常**
+   - 使用 `raspistill` 測試相機模組，確保其能正常拍攝圖片：
+     ```
+     raspistill -o test.jpg
+     ```
+
+### 步驟 2: 安裝視訊串流伺服器（如 `motion`）
+1. **安裝 `motion`**
+   - 安裝 `motion`，這是一個用來進行視訊串流的工具：
+     ```
+     sudo apt update
+     sudo apt install motion
+     ```
+
+2. **啟用 `motion` 串流**
+   - 編輯 `motion` 配置文件：
+     ```
+     sudo nano /etc/motion/motion.conf
+     ```
+   - 修改以下參數來啟用視訊串流：
+     - `daemon on` （讓 `motion` 在背景執行）
+     - `stream_localhost off` （允許從其他設備訪問串流）
+     - `framerate 30` （設置幀率）
+     - `width 640` 和 `height 480` （設置解析度）
+
+   - 保存並退出編輯器。
+
+3. **設置 `motion` 為服務**
+   - 編輯 `/etc/default/motion` 文件，將 `start_motion_daemon` 設置為 `yes`：
+     ```
+     sudo nano /etc/default/motion
+     ```
+   - 將 `start_motion_daemon=no` 改為 `start_motion_daemon=yes`。
+
+4. **啟動 `motion`**
+   - 啟動 `motion` 並讓它在開機時自動啟動：
+     ```
+     sudo systemctl start motion
+     sudo systemctl enable motion
+     ```
+
+### 步驟 3: 在 PC 或手機上查看視訊
+1. **確認樹莓派的 IP 地址**
+   - 使用命令查看樹莓派的 IP 地址：
+     ```
+     hostname -I
+     ```
+
+2. **在瀏覽器中查看串流畫面**
+   - 在 PC 或手機的瀏覽器中輸入以下 URL 來查看視訊串流：
+     ```
+     http://<樹莓派IP地址>:8081
+     ```
+
+### 選擇方案
+如果你想要更多的功能（例如雙向音訊或高解析度串流），可以考慮使用 `UV4L` 或 `gstreamer` 等進階工具來實現更多的功能。
+    '''
+    #192.168.88.220 2001:b400:e237:162d:7057:e1bd:7af8:5317 
