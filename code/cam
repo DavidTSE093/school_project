@@ -1,0 +1,64 @@
+要使用樹莓派（Raspberry Pi）加上攝影機模組（如 Raspberry Pi Camera Module），並在 PC 或手機上連接以觀看視訊畫面，你可以按照以下步驟進行設定。
+
+### 1. 設定樹莓派和攝影機模組
+首先，確保你的攝影機模組已經正確連接到樹莓派，並進行以下設定：
+
+#### 開啟樹莓派攝影機模組
+1. 在樹莓派終端機輸入：
+   ```bash
+   sudo raspi-config
+   ```
+2. 選擇 `Interfacing Options` > `Camera`，並將其啟用。
+3. 重新啟動樹莓派：
+   ```bash
+   sudo reboot
+   ```
+
+#### 測試攝影機模組
+可以使用 `libcamera` 測試攝影機模組是否正常工作：
+```bash
+libcamera-hello
+```
+
+### 2. 安裝視訊串流伺服器軟體
+樹莓派上常用的視訊串流伺服器是 `mjpg-streamer`，它可以將攝影機模組的視訊流傳輸到網頁瀏覽器中。
+
+#### 安裝 `mjpg-streamer`
+1. 更新系統並安裝必要的工具：
+   ```bash
+   sudo apt update
+   sudo apt install libjpeg-dev cmake gcc g++ git
+   ```
+
+2. 下載並安裝 `mjpg-streamer`：
+   ```bash
+   git clone https://github.com/jacksonliam/mjpg-streamer.git
+   cd mjpg-streamer/mjpg-streamer-experimental
+   make
+   sudo make install
+   ```
+
+#### 啟動視訊串流
+使用以下命令啟動串流：
+```bash
+./mjpg_streamer -o "output_http.so -w ./www" -i "input_raspicam.so"
+```
+
+這將在樹莓派的 IP 地址上啟動 HTTP 伺服器，你可以通過 PC 或手機瀏覽器訪問該地址來查看實時視訊流。
+
+### 3. 在 PC 或手機上查看視訊畫面
+假設樹莓派的 IP 地址是 `192.168.1.100`，在 PC 或手機的瀏覽器中輸入以下 URL：
+```
+http://192.168.1.100:8080
+```
+這樣你就可以查看樹莓派攝影機模組的視訊畫面了。
+
+### 4. 調整串流選項
+你可以調整 `mjpg-streamer` 的一些參數，例如改變解析度、幀率等：
+```bash
+./mjpg_streamer -o "output_http.so -w ./www" -i "input_raspicam.so -x 640 -y 480 -fps 30"
+```
+這裡，`-x` 和 `-y` 是解析度，`-fps` 是每秒幀數。
+
+### 總結
+以上步驟能夠讓你在樹莓派上使用攝影機模組，並將視訊畫面串流到 PC 或手機上觀看。你可以根據需求調整畫面質量及幀率。
