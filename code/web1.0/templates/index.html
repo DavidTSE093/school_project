@@ -3,52 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>圖片上傳與倒數</title>
+    <title>Verification procedure</title>
     <style>
         #countdown {
             font-size: 20px;
             margin-top: 10px;
         }
+        #imageContainer img {
+            max-width: 500px; /* 控制圖片最大寬度 */
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>圖片上傳示例</h1>
-    <button id="uploadButton">上傳圖片</button>
-    <div id="imageContainer" style="margin-top: 20px;"></div>
+    <h1>Verification procedure</h1>
+    <form method="post" id="runScriptForm">
+        <button type="submit" id="runButton">執行 Python 程式(create the qrcode)</button>
+    </form>
+    <div id="imageContainer">
+        <img id="qrcodeImage" src="static/uploads/qrcode.png" alt="QR Code" style="display: none;">
+    </div>
     <div id="countdown"></div>
 
     <script>
-        document.getElementById('uploadButton').addEventListener('click', function() {
-            const imageContainer = document.getElementById('imageContainer');
-            imageContainer.innerHTML = ""; // 清空之前的內容
-            
-            // 模擬圖片上傳
-            setTimeout(() => {
-                const img = document.createElement('img');
-                img.src = 'static/qrcode.png'; // 指定圖片位置
-                img.alt = 'Uploaded Image';
-                img.style.maxWidth = '500px'; // 控制圖片最大寬度
-                imageContainer.appendChild(img);
-                
-                // 開始倒數
-                startCountdown(30);
-            }, 3000);
-        });
+        let countdownInterval; // 用于存储倒计时的定时器
 
         function startCountdown(seconds) {
             const countdownDisplay = document.getElementById('countdown');
             let remainingTime = seconds;
 
-            const interval = setInterval(() => {
-                countdownDisplay.innerText = `倒數：${remainingTime}秒`;
+            countdownDisplay.innerText = `倒數：${remainingTime}秒`; // 初始化显示倒计时
+
+            countdownInterval = setInterval(() => {
                 remainingTime--;
+                countdownDisplay.innerText = `倒數：${remainingTime}秒`;
 
                 if (remainingTime < 0) {
-                    clearInterval(interval);
+                    clearInterval(countdownInterval);
                     countdownDisplay.innerText = "時間到！";
+
+                    // 倒计时结束后刷新页面
+                    setTimeout(() => {
+                        location.reload(); // 刷新页面
+                    }, 1000); // 延迟1秒后刷新页面
                 }
             }, 1000);
         }
+
+        // 按钮点击事件
+        document.getElementById('runScriptForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // 防止表单提交
+            // 显示 QR 码
+            const qrcodeImage = document.getElementById('qrcodeImage');
+            qrcodeImage.style.display = 'block';  // 显示 QR 码
+            
+            // 开始倒计时
+            startCountdown(30);
+        });
     </script>
 </body>
 </html>
